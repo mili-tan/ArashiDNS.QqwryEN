@@ -38,7 +38,7 @@ class Program
 
     static async Task Main(string[] args)
     {
-        string tempFile = Path.GetTempFileName();
+        var tempFile = Path.GetTempFileName();
         LoadConfiguration();
 
         if (!File.Exists(inputFile))
@@ -62,7 +62,7 @@ class Program
             long totalLines = 0, validLines = 0;
 
             using (var reader = new StreamReader(inputFile, Encoding.UTF8))
-            using (var writer = new StreamWriter(tempFile, false, Encoding.UTF8))
+            await using (var writer = new StreamWriter(tempFile, false, Encoding.UTF8))
             {
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
@@ -104,14 +104,14 @@ class Program
             await TranslateIspBatchWithDeepSeekAsync(ispTexts, cts.Token);
             await TranslateBatchAsync(generalTexts, generalCache, CacheType.General, "其他字段", cts.Token);
 
-            cts.Cancel();
+            await cts.CancelAsync();
             await cacheWriterTask;
 
             Console.WriteLine("应用翻译生成输出文件...");
             long processed = 0;
 
             using (var reader = new StreamReader(tempFile, Encoding.UTF8))
-            using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
+            await using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
             {
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
@@ -123,7 +123,7 @@ class Program
                         continue;
                     }
 
-                    string locationKey = record.GetLocationKey();
+                    var locationKey = record.GetLocationKey();
                     if (!string.IsNullOrEmpty(locationKey) && locationCache.TryGetValue(locationKey, out var transLocation))
                         ApplyLocationTranslation(record, transLocation);
 
@@ -132,7 +132,7 @@ class Program
 
                     ApplyGeneralTranslations(record);
 
-                    string newLine = $"{record.IpCidr}\t{string.Join(",", record.Parts)}";
+                    var newLine = $"{record.IpCidr}\t{string.Join(",", record.Parts)}";
                     await writer.WriteLineAsync(newLine);
 
                     processed++;
@@ -194,9 +194,9 @@ class Program
         }
 
         Console.WriteLine($"开始翻译 地点四元组 ({locationKeys.Count} 项)...");
-        int total = locationKeys.Count;
-        int completed = 0;
-        int lastReport = 0;
+        var total = locationKeys.Count;
+        var completed = 0;
+        var lastReport = 0;
 
         var parallelOptions = new ParallelOptions
         {
@@ -215,12 +215,12 @@ class Program
             await deepseekConcurrencySemaphore.WaitAsync(ct);
             try
             {
-                string[] translated = await TranslateLocationWithDeepSeekAsync(locationKey);
-                string translatedValue = string.Join("|", translated);
+                var translated = await TranslateLocationWithDeepSeekAsync(locationKey);
+                var translatedValue = string.Join("|", translated);
                 locationCache[locationKey] = translatedValue;
                 pendingWrites.Enqueue(new CacheEntry(CacheType.Location, locationKey, translatedValue));
 
-                int current = Interlocked.Increment(ref completed);
+                var current = Interlocked.Increment(ref completed);
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
@@ -254,9 +254,9 @@ class Program
         }
 
         Console.WriteLine($"开始翻译 ISP名称 ({ispNames.Count} 项)...");
-        int total = ispNames.Count;
-        int completed = 0;
-        int lastReport = 0;
+        var total = ispNames.Count;
+        var completed = 0;
+        var lastReport = 0;
 
         var parallelOptions = new ParallelOptions
         {
@@ -275,11 +275,11 @@ class Program
             await deepseekConcurrencySemaphore.WaitAsync(ct);
             try
             {
-                string translated = await TranslateIspWithDeepSeekAsync(ispName);
+                var translated = await TranslateIspWithDeepSeekAsync(ispName);
                 ispCache[ispName] = translated;
                 pendingWrites.Enqueue(new CacheEntry(CacheType.Isp, ispName, translated));
 
-                int current = Interlocked.Increment(ref completed);
+                var current = Interlocked.Increment(ref completed);
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
@@ -316,9 +316,9 @@ class Program
         }
 
         Console.WriteLine($"开始翻译 {batchName} ({textsToTranslate.Count} 项)...");
-        int total = textsToTranslate.Count;
-        int completed = 0;
-        int lastReport = 0;
+        var total = textsToTranslate.Count;
+        var completed = 0;
+        var lastReport = 0;
 
         var parallelOptions = new ParallelOptions
         {
@@ -337,11 +337,11 @@ class Program
             await googleConcurrencySemaphore.WaitAsync(ct);
             try
             {
-                string translated = await TranslateTextWithRetryAsync(text);
+                var translated = await TranslateTextWithRetryAsync(text);
                 cache[text] = translated;
                 pendingWrites.Enqueue(new CacheEntry(cacheType, text, translated));
 
-                int current = Interlocked.Increment(ref completed);
+                var current = Interlocked.Increment(ref completed);
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
@@ -367,11 +367,11 @@ class Program
 
     private static async Task<string[]> TranslateLocationWithDeepSeekAsync(string locationKey, int maxRetries = 3)
     {
-        string[] parts = locationKey.Split('|');
+        var parts = locationKey.Split('|');
         if (parts.Length != 4)
             throw new ArgumentException($"地点四元组格式错误: {locationKey}");
 
-        string systemPrompt = @"你是一个专业的地理名称翻译助手。请将以下 JSON 数组中的中文地理名称翻译为英文。
+        var systemPrompt = @"你是一个专业的地理名称翻译助手。请将以下 JSON 数组中的中文地理名称翻译为英文。
 输入格式：[""国家"", ""省"", ""市"", ""区""]
 输出格式：{""translated"": [""Country"", ""Region"", ""City"", ""District""]}
 要求：
@@ -380,9 +380,9 @@ class Program
 3. 只输出 JSON 对象，不要有其他内容
 4. 英文翻译不要输出省、市、县、区等后缀（如 Province、City、County、District 等），只输出地名本身";
 
-        string userPrompt = JsonSerializer.Serialize(parts);
+        var userPrompt = JsonSerializer.Serialize(parts);
 
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
             {
@@ -399,7 +399,7 @@ class Program
                     stream = false
                 };
 
-                string jsonContent = JsonSerializer.Serialize(requestBody);
+                var jsonContent = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 var request = new HttpRequestMessage(HttpMethod.Post, $"{deepSeekBaseUrl}/chat/completions");
@@ -409,7 +409,7 @@ class Program
                 var response = await httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
-                string responseJson = await response.Content.ReadAsStringAsync();
+                var responseJson = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(responseJson);
                 var messageContent = doc.RootElement
                     .GetProperty("choices")[0]
@@ -423,7 +423,7 @@ class Program
                 using var resultDoc = JsonDocument.Parse(messageContent);
                 var translatedArray = resultDoc.RootElement.GetProperty("translated");
                 var result = new string[4];
-                for (int i = 0; i < 4; i++)
+                for (var i = 0; i < 4; i++)
                     result[i] = translatedArray[i].GetString() ?? "";
                 return result;
             }
@@ -442,7 +442,7 @@ class Program
 
     private static async Task<string> TranslateIspWithDeepSeekAsync(string ispName, int maxRetries = 3)
     {
-        string systemPrompt = @"你是一个专业的 ISP（互联网服务提供商）名称翻译助手。请将以下中文 ISP 名称翻译为英文。
+        var systemPrompt = @"你是一个专业的 ISP（互联网服务提供商）名称翻译助手。请将以下中文 ISP 名称翻译为英文。
 要求：
 1. 若未说明，优先按照中国的语境来翻译
 2. 使用公认的通用翻译，例如：
@@ -462,9 +462,9 @@ class Program
 5. 输出json格式：{""translated"": ""ISP名称""}
 6. 如果输入已经是英文，直接返回原样";
 
-        string userPrompt = $"请将以下ISP名称翻译为英文json: {ispName}";
+        var userPrompt = $"请将以下ISP名称翻译为英文json: {ispName}";
 
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
             try
             {
@@ -481,7 +481,7 @@ class Program
                     stream = false
                 };
 
-                string jsonContent = JsonSerializer.Serialize(requestBody);
+                var jsonContent = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 var request = new HttpRequestMessage(HttpMethod.Post, $"{deepSeekBaseUrl}/chat/completions");
@@ -491,7 +491,7 @@ class Program
                 var response = await httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
-                string responseJson = await response.Content.ReadAsStringAsync();
+                var responseJson = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(responseJson);
                 var messageContent = doc.RootElement
                     .GetProperty("choices")[0]
@@ -521,13 +521,11 @@ class Program
     private static void ApplyLocationTranslation(LineRecord record, string translatedLocation)
     {
         var parts = translatedLocation.Split('|');
-        if (parts.Length == 4)
-        {
-            record.Parts[IdxCountry] = parts[0];
-            record.Parts[IdxRegion] = parts[1];
-            record.Parts[IdxCity] = parts[2];
-            record.Parts[IdxDistrict] = parts[3];
-        }
+        if (parts.Length != 4) return;
+        record.Parts[IdxCountry] = parts[0];
+        record.Parts[IdxRegion] = parts[1];
+        record.Parts[IdxCity] = parts[2];
+        record.Parts[IdxDistrict] = parts[3];
     }
 
     private static void ApplyGeneralTranslations(LineRecord record)
@@ -549,13 +547,11 @@ class Program
             Parts = tabSplit[1].Split(',')
         };
 
-        if (record.Parts.Length < 8)
-        {
-            var newParts = new string[8];
-            Array.Copy(record.Parts, newParts, record.Parts.Length);
-            for (int i = record.Parts.Length; i < 8; i++) newParts[i] = "";
-            record.Parts = newParts;
-        }
+        if (record.Parts.Length >= 8) return record;
+        var newParts = new string[8];
+        Array.Copy(record.Parts, newParts, record.Parts.Length);
+        for (int i = record.Parts.Length; i < 8; i++) newParts[i] = "";
+        record.Parts = newParts;
 
         return record;
     }
@@ -566,7 +562,7 @@ class Program
         {
             try
             {
-                string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q={Uri.EscapeDataString(text)}";
+                var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q={Uri.EscapeDataString(text)}";
                 var response = await httpClient.GetStringAsync(url);
                 return ExtractTranslatedText(response);
             }
@@ -584,18 +580,18 @@ class Program
 
     private static string ExtractTranslatedText(string jsonResponse)
     {
-        int startIdx = jsonResponse.IndexOf("[[[");
+        var startIdx = jsonResponse.IndexOf("[[[");
         if (startIdx == -1) throw new Exception("响应格式异常");
 
-        int firstQuote = jsonResponse.IndexOf('"', startIdx);
+        var firstQuote = jsonResponse.IndexOf('"', startIdx);
         if (firstQuote == -1) throw new Exception("未找到译文起始引号");
 
         var sb = new StringBuilder();
-        bool escaped = false;
-        int i = firstQuote + 1;
+        var escaped = false;
+        var i = firstQuote + 1;
         for (; i < jsonResponse.Length; i++)
         {
-            char c = jsonResponse[i];
+            var c = jsonResponse[i];
             if (escaped)
             {
                 switch (c)
@@ -636,15 +632,13 @@ class Program
     private static void LoadCacheFile(string path, ConcurrentDictionary<string, string> dict, string name)
     {
         if (!File.Exists(path)) return;
-        int count = 0;
+        var count = 0;
         foreach (var line in File.ReadLines(path, Encoding.UTF8))
         {
             var parts = line.Split('\t');
-            if (parts.Length == 2)
-            {
-                dict[parts[0]] = parts[1];
-                count++;
-            }
+            if (parts.Length != 2) continue;
+            dict[parts[0]] = parts[1];
+            count++;
         }
         Console.WriteLine($"已加载 {name} 缓存 {count} 条。");
     }
