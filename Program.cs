@@ -453,8 +453,14 @@ class Program
    - 联通 → China Unicom
    - 广电 → China Broadcasting Network
    - 铁通 → China Tietong
-3. 输出json格式：{""translated"": ""ISP名称""}
-4. 如果输入已经是英文，直接返回原样";
+3. 对于含有额外信息的ISP名称，使用""_""作为分隔符，格式为：""ISP_类型_所有者""或""ISP_额外信息""或""ISP_子品牌或子业务""
+   示例：
+   - 网宿科技联通CDN节点 → China Unicom_CDN_ChinaNetCenter
+   - 电信通 → Dr.Peng_Dianxintong
+   - 保留地址(This_network) → Reserved Address_(This Network)
+4. ""_""仅作为分隔符，确保输出结果不以""_""开头或结尾
+5. 输出json格式：{""translated"": ""ISP名称""}
+6. 如果输入已经是英文，直接返回原样";
 
         string userPrompt = $"请将以下ISP名称翻译为英文json: {ispName}";
 
