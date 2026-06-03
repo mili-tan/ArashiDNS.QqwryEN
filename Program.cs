@@ -17,6 +17,9 @@ class Program
     private static string deepSeekBaseUrl = "https://api.deepseek.com";
     private static string deepSeekModel = "deepseek-v4-flash";
 
+    private static string locationPrompt = "";
+    private static string ispPrompt = "";
+
     private static readonly ConcurrentDictionary<string, string> generalCache = new();
     private static readonly ConcurrentDictionary<string, string> locationCache = new();
     private static readonly ConcurrentDictionary<string, string> ispCache = new();
@@ -159,6 +162,9 @@ class Program
         deepSeekApiKey = configuration["DeepSeek:ApiKey"] ?? "";
         deepSeekBaseUrl = configuration["DeepSeek:BaseUrl"] ?? "https://api.deepseek.com";
         deepSeekModel = configuration["DeepSeek:Model"] ?? "deepseek-v4-flash";
+
+        locationPrompt = (configuration["Prompts:LocationPrompt"] ?? "").Replace("\\n", "\n");
+        ispPrompt = (configuration["Prompts:IspPrompt"] ?? "").Replace("\\n", "\n");
 
         inputFile = configuration["Files:InputFile"] ?? "qqwry.txt";
         outputFile = configuration["Files:OutputFile"] ?? "output_en.txt";
@@ -371,15 +377,7 @@ class Program
         if (parts.Length != 4)
             throw new ArgumentException($"地点四元组格式错误: {locationKey}");
 
-        var systemPrompt = @"你是一个专业的地理名称翻译助手。请将以下 JSON 数组中的中文地理名称翻译为英文。
-输入格式：[""国家"", ""省"", ""市"", ""区""]
-输出格式：{""translated"": [""Country"", ""Region"", ""City"", ""District""]}
-要求：
-1. 使用标准的英文地理名称
-2. 如果某个字段为空字符串，输出也对应为空字符串
-3. 只输出 JSON 对象，不要有其他内容
-4. 英文翻译不要输出省、市、县、区等后缀（如 Province、City、County、District 等），只输出地名本身";
-
+        var systemPrompt = locationPrompt;
         var userPrompt = JsonSerializer.Serialize(parts);
 
         for (var attempt = 1; attempt <= maxRetries; attempt++)
@@ -442,26 +440,7 @@ class Program
 
     private static async Task<string> TranslateIspWithDeepSeekAsync(string ispName, int maxRetries = 3)
     {
-        var systemPrompt = @"你是一个专业的 ISP（互联网服务提供商）名称翻译助手。请将以下中文 ISP 名称翻译为英文。
-要求：
-1. 若未说明，优先按照中国的语境来翻译
-2. 使用公认的通用翻译，例如：
-   - 教育网 → CERNET (China Education and Research Network)
-   - 科技网 → CSTNET (China Science and Technology Network)
-   - 移动 → China Mobile
-   - 电信 → China Telecom
-   - 联通 → China Unicom
-   - 广电 → China Broadcasting Network
-   - 铁通 → China Tietong
-3. 对于含有额外信息的ISP名称，使用""_""作为分隔符，格式为：""ISP_类型_所有者""或""ISP_额外信息""或""ISP_子品牌或子业务""
-   示例：
-   - 网宿科技联通CDN节点 → China Unicom_CDN_ChinaNetCenter
-   - 电信通 → Dr.Peng_Dianxintong
-   - 保留地址(This_network) → Reserved Address_(This Network)
-4. ""_""仅作为分隔符，确保输出结果不以""_""开头或结尾
-5. 输出json格式：{""translated"": ""ISP名称""}
-6. 如果输入已经是英文，直接返回原样";
-
+        var systemPrompt = ispPrompt;
         var userPrompt = $"请将以下ISP名称翻译为英文json: {ispName}";
 
         for (var attempt = 1; attempt <= maxRetries; attempt++)
