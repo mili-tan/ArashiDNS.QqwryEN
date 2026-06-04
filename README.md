@@ -1,4 +1,4 @@
-# QqwryEN
+# QQWRY-EN
 
 将纯真 IP 数据库（QQWRY）从中文翻译为英文的工具。
 
@@ -10,8 +10,30 @@
 - 支持并发翻译，可配置并发数
 - 支持缓存，避免重复翻译
 - 所有配置均可通过 `appsettings.json` 调整
+- GitHub Actions 自动更新（每月1日、15日）
 
-## 使用流程
+## 下载
+
+从 [Releases](https://github.com/YOUR_USERNAME/QQWRY-EN/releases) 页面下载最新的 `qqwry_en.ipdb` 或 `output_en.txt` 文件。
+
+## 自动构建
+
+本项目使用 GitHub Actions 自动构建，每月1日和15日自动更新：
+
+1. 从 [sjzar/ips](https://github.com/sjzar/ips) 获取最新 ips 工具
+2. 从 [nmgliangwei/qqwry.ipdb](https://github.com/nmgliangwei/qqwry.ipdb/releases/) 获取最新 qqwry.ipdb
+3. 解包、翻译、重新打包
+4. 发布到 Releases（保留最近3个版本）
+
+### 配置 Secrets
+
+在仓库 Settings > Secrets and variables > Actions 中添加：
+
+| Secret | 说明 |
+|--------|------|
+| DEEPSEEK_API_KEY | DeepSeek API Key |
+
+## 手动构建
 
 ### 1. 安装依赖
 
@@ -50,6 +72,18 @@ ips dump -i qqwry.ipdb -o qqwry.txt
   }
 }
 ```
+
+或者设置环境变量 `DEEPSEEK_API_KEY`：
+
+```bash
+# Windows PowerShell
+$env:DEEPSEEK_API_KEY="your-api-key-here"
+
+# Linux/macOS
+export DEEPSEEK_API_KEY="your-api-key-here"
+```
+
+> 当配置文件中的 API Key 为空或为默认值 `your-api-key-here` 时，程序会自动从环境变量 `DEEPSEEK_API_KEY` 读取。
 
 ### 4. 运行翻译
 

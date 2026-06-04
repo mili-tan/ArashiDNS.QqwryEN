@@ -163,6 +163,9 @@ class Program
         deepSeekBaseUrl = configuration["DeepSeek:BaseUrl"] ?? "https://api.deepseek.com";
         deepSeekModel = configuration["DeepSeek:Model"] ?? "deepseek-v4-flash";
 
+        if (string.IsNullOrEmpty(deepSeekApiKey) || deepSeekApiKey == "your-api-key-here")
+            deepSeekApiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY") ?? "";
+
         locationPrompt = (configuration["Prompts:LocationPrompt"] ?? "").Replace("\\n", "\n");
         ispPrompt = (configuration["Prompts:IspPrompt"] ?? "").Replace("\\n", "\n");
 
@@ -182,8 +185,8 @@ class Program
 
         Console.WriteLine($"文件配置: Input={inputFile}, Output={outputFile}");
         Console.WriteLine($"缓存配置: Location={locationCachePath}, ISP={ispCachePath}, General={generalCachePath}");
-        if (string.IsNullOrEmpty(deepSeekApiKey) || deepSeekApiKey == "your-api-key-here")
-            Console.WriteLine("警告: DeepSeek API Key 未配置或使用默认值，请在 appsettings.json 中设置。");
+        if (string.IsNullOrEmpty(deepSeekApiKey))
+            Console.WriteLine("警告: DeepSeek API Key 未配置，请在 appsettings.json 中设置或设置环境变量 DEEPSEEK_API_KEY。");
         else
             Console.WriteLine($"DeepSeek 配置已加载: Model={deepSeekModel}, BaseUrl={deepSeekBaseUrl}");
         Console.WriteLine($"并发配置: Google={googleConcurrency}, DeepSeek={deepseekConcurrency}");
