@@ -61,6 +61,7 @@ class Program
             var locationTexts = new HashSet<string>();
             var ispTexts = new HashSet<string>();
             var generalTexts = new HashSet<string>();
+            var commentLines = new List<string>();
 
             long totalLines = 0, validLines = 0;
 
@@ -74,7 +75,11 @@ class Program
                     if (totalLines % 100_000 == 0)
                         Console.Write($"\r已扫描 {totalLines} 行...");
 
-                    if (line.StartsWith('#')) continue;
+                    if (line.StartsWith('#'))
+                    {
+                        commentLines.Add(line);
+                        continue;
+                    }
 
                     await writer.WriteLineAsync(line);
                     validLines++;
@@ -116,6 +121,9 @@ class Program
             using (var reader = new StreamReader(tempFile, Encoding.UTF8))
             await using (var writer = new StreamWriter(outputFile, false, Encoding.UTF8))
             {
+                foreach (var comment in commentLines)
+                    await writer.WriteLineAsync(comment);
+
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
