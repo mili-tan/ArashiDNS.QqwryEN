@@ -1,8 +1,6 @@
 name: Build QQWRY-EN
 
 on:
-  schedule:
-    - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
 permissions:
