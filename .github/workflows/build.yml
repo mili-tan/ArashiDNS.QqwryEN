@@ -23,9 +23,9 @@ jobs:
 
       - name: Download previous caches
         run: |
-          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/location_cache.tsv -o location_cache.tsv || true
-          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/isp_cache.tsv -o isp_cache.tsv || true
-          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/translation_cache.tsv -o translation_cache.tsv || true
+          curl -sfL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/location_cache.tsv -o location_cache.tsv || curl -sfL https://raw.githubusercontent.com/mili-tan/ArashiDNS.QqwryEN/main/location_cache.tsv -o location_cache.tsv || true
+          curl -sfL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/isp_cache.tsv -o isp_cache.tsv || curl -sfL https://raw.githubusercontent.com/mili-tan/ArashiDNS.QqwryEN/main/isp_cache.tsv -o isp_cache.tsv || true
+          curl -sfL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/translation_cache.tsv -o translation_cache.tsv || curl -sfL https://raw.githubusercontent.com/mili-tan/ArashiDNS.QqwryEN/main/translation_cache.tsv -o translation_cache.tsv || true
 
       - name: Download ips
         run: |
