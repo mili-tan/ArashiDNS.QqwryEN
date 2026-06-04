@@ -21,6 +21,12 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Download previous caches
+        run: |
+          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/location_cache.tsv -o location_cache.tsv || true
+          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/isp_cache.tsv -o isp_cache.tsv || true
+          curl -sL https://github.com/mili-tan/ArashiDNS.QqwryEN/releases/latest/download/translation_cache.tsv -o translation_cache.tsv || true
+
       - name: Download ips
         run: |
           curl -sL https://github.com/sjzar/ips/releases/latest/download/ips_linux -o ips
@@ -65,9 +71,15 @@ jobs:
             ## Files
             - `qqwry_en.ipdb` - IPDB format
             - `output_en.txt` - TXT format
+            - `location_cache.tsv` - Location cache
+            - `isp_cache.tsv` - ISP cache
+            - `translation_cache.tsv` - General cache
           files: |
             qqwry_en.ipdb
             output_en.txt
+            location_cache.tsv
+            isp_cache.tsv
+            translation_cache.tsv
           draft: false
           prerelease: false
 
