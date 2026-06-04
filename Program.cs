@@ -416,7 +416,13 @@ class Program
                 request.Headers.Add("Authorization", $"Bearer {deepSeekApiKey}");
 
                 var response = await httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"\nDeepSeek API 请求失败: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    Console.WriteLine($"响应内容: {errorBody}");
+                    throw new Exception($"DeepSeek API 请求失败: {(int)response.StatusCode}");
+                }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(responseJson);
@@ -479,7 +485,13 @@ class Program
                 request.Headers.Add("Authorization", $"Bearer {deepSeekApiKey}");
 
                 var response = await httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"\nDeepSeek API 请求失败: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    Console.WriteLine($"响应内容: {errorBody}");
+                    throw new Exception($"DeepSeek API 请求失败: {(int)response.StatusCode}");
+                }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(responseJson);
