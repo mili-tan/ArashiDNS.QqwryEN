@@ -72,7 +72,7 @@ class Program
 
         if (!File.Exists(inputFile))
         {
-            Console.WriteLine($"输入文件 {inputFile} 不存在。");
+            Console.WriteLine($"Input file {inputFile} not found.");
             return;
         }
 
@@ -83,7 +83,7 @@ class Program
 
         try
         {
-            Console.WriteLine("第一遍扫描：收集待翻译文本...");
+            Console.WriteLine("Pass 1: Collecting texts to translate...");
             var locationTexts = new HashSet<string>();
             var ispTexts = new HashSet<string>();
             var generalTexts = new HashSet<string>();
@@ -99,7 +99,7 @@ class Program
                 {
                     totalLines++;
                     if (totalLines % 100_000 == 0)
-                        Console.Write($"\r已扫描 {totalLines} 行...");
+                        Console.Write($"\rScanned {totalLines} lines...");
 
                     if (line.StartsWith('#'))
                     {
@@ -128,20 +128,20 @@ class Program
                 }
             }
 
-            Console.WriteLine($"\n扫描完成。有效行: {validLines}");
-            Console.WriteLine("待翻译文本:");
-            Console.WriteLine($"  地点四元组: {locationTexts.Count}");
-            Console.WriteLine($"  ISP名称: {ispTexts.Count}");
-            Console.WriteLine($"  其他字段: {generalTexts.Count}");
+            Console.WriteLine($"\nScan complete. Valid lines: {validLines}");
+            Console.WriteLine("Texts to translate:");
+            Console.WriteLine($"  Location quads: {locationTexts.Count}");
+            Console.WriteLine($"  ISP names: {ispTexts.Count}");
+            Console.WriteLine($"  Other fields: {generalTexts.Count}");
 
             await TranslateLocationBatchWithDeepSeekAsync(locationTexts, cts.Token);
             await TranslateIspBatchWithDeepSeekAsync(ispTexts, cts.Token);
-            await TranslateBatchAsync(generalTexts, generalCache, CacheType.General, "其他字段", cts.Token);
+            await TranslateBatchAsync(generalTexts, generalCache, CacheType.General, "Other fields", cts.Token);
 
             await cts.CancelAsync();
             await cacheWriterTask;
 
-            Console.WriteLine("应用翻译生成输出文件...");
+            Console.WriteLine("Applying translations and generating output...");
             long processed = 0;
 
             using (var reader = new StreamReader(tempFile, Encoding.UTF8))
@@ -174,11 +174,11 @@ class Program
 
                     processed++;
                     if (processed % 100_000 == 0)
-                        Console.Write($"\r已处理 {processed} 行...");
+                        Console.Write($"\rProcessed {processed} lines...");
                 }
             }
 
-            Console.WriteLine($"\n全部完成！输出文件: {outputFile}");
+            Console.WriteLine($"\nDone! Output file: {outputFile}");
         }
         finally
         {
@@ -219,13 +219,13 @@ class Program
         googleConcurrencySemaphore = new SemaphoreSlim(googleConcurrency);
         deepseekConcurrencySemaphore = new SemaphoreSlim(deepseekConcurrency);
 
-        Console.WriteLine($"文件配置: Input={inputFile}, Output={outputFile}");
-        Console.WriteLine($"缓存配置: Location={locationCachePath}, ISP={ispCachePath}, General={generalCachePath}");
+        Console.WriteLine($"Files: Input={inputFile}, Output={outputFile}");
+        Console.WriteLine($"Cache: Location={locationCachePath}, ISP={ispCachePath}, General={generalCachePath}");
         if (string.IsNullOrEmpty(deepSeekApiKey))
-            Console.WriteLine("警告: DeepSeek API Key 未配置，请在 appsettings.json 中设置或设置环境变量 DEEPSEEK_API_KEY。");
+            Console.WriteLine("Warning: DeepSeek API Key not configured. Set it in appsettings.json or environment variable DEEPSEEK_API_KEY.");
         else
-            Console.WriteLine($"DeepSeek 配置已加载: Model={deepSeekModel}, BaseUrl={deepSeekBaseUrl}");
-        Console.WriteLine($"并发配置: Google={googleConcurrency}, DeepSeek={deepseekConcurrency}");
+            Console.WriteLine($"DeepSeek: Model={deepSeekModel}, BaseUrl={deepSeekBaseUrl}");
+        Console.WriteLine($"Concurrency: Google={googleConcurrency}, DeepSeek={deepseekConcurrency}");
     }
 
     private static async Task TranslateLocationBatchWithDeepSeekAsync(
@@ -234,11 +234,11 @@ class Program
     {
         if (locationKeys.Count == 0)
         {
-            Console.WriteLine("地点四元组 无新文本，跳过。");
+            Console.WriteLine("Location quads: no new texts, skipping.");
             return;
         }
 
-        Console.WriteLine($"开始翻译 地点四元组 ({locationKeys.Count} 项)...");
+        Console.WriteLine($"Translating location quads ({locationKeys.Count} items)...");
         var total = locationKeys.Count;
         var completed = 0;
         var lastReport = 0;
@@ -269,12 +269,12 @@ class Program
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
-                    Console.Write($"\r地点四元组 进度: {current}/{total} ({(double)current / total:P1})");
+                    Console.Write($"\rLocation quads: {current}/{total} ({(double)current / total:P1})");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\n地点四元组 翻译失败: {locationKey} - {ex.Message}");
+                Console.WriteLine($"\nLocation translation failed: {locationKey} - {ex.Message}");
                 locationCache[locationKey] = locationKey;
                 pendingWrites.Enqueue(new CacheEntry(CacheType.Location, locationKey, locationKey));
                 Interlocked.Increment(ref completed);
@@ -285,7 +285,7 @@ class Program
             }
         });
 
-        Console.WriteLine($"\n地点四元组 翻译完成。");
+        Console.WriteLine($"\nLocation quads translation complete.");
     }
 
     private static async Task TranslateIspBatchWithDeepSeekAsync(
@@ -294,11 +294,11 @@ class Program
     {
         if (ispNames.Count == 0)
         {
-            Console.WriteLine("ISP名称 无新文本，跳过。");
+            Console.WriteLine("ISP names: no new texts, skipping.");
             return;
         }
 
-        Console.WriteLine($"开始翻译 ISP名称 ({ispNames.Count} 项)...");
+        Console.WriteLine($"Translating ISP names ({ispNames.Count} items)...");
         var total = ispNames.Count;
         var completed = 0;
         var lastReport = 0;
@@ -328,12 +328,12 @@ class Program
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
-                    Console.Write($"\rISP名称 进度: {current}/{total} ({(double)current / total:P1})");
+                    Console.Write($"\rISP names: {current}/{total} ({(double)current / total:P1})");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\nISP名称 翻译失败: {ispName} - {ex.Message}");
+                Console.WriteLine($"\nISP translation failed: {ispName} - {ex.Message}");
                 ispCache[ispName] = ispName;
                 pendingWrites.Enqueue(new CacheEntry(CacheType.Isp, ispName, ispName));
                 Interlocked.Increment(ref completed);
@@ -344,7 +344,7 @@ class Program
             }
         });
 
-        Console.WriteLine($"\nISP名称 翻译完成。");
+        Console.WriteLine($"\nISP names translation complete.");
     }
 
     private static async Task TranslateBatchAsync(
@@ -356,11 +356,11 @@ class Program
     {
         if (textsToTranslate.Count == 0)
         {
-            Console.WriteLine($"{batchName} 无新文本，跳过。");
+            Console.WriteLine($"{batchName}: no new texts, skipping.");
             return;
         }
 
-        Console.WriteLine($"开始翻译 {batchName} ({textsToTranslate.Count} 项)...");
+        Console.WriteLine($"Translating {batchName} ({textsToTranslate.Count} items)...");
         var total = textsToTranslate.Count;
         var completed = 0;
         var lastReport = 0;
@@ -390,12 +390,12 @@ class Program
                 if (current - lastReport >= 10 || current == total)
                 {
                     lastReport = current;
-                    Console.Write($"\r{batchName} 进度: {current}/{total} ({(double)current / total:P1})");
+                    Console.Write($"\r{batchName}: {current}/{total} ({(double)current / total:P1})");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\n{batchName} 翻译失败: {text} - {ex.Message}");
+                Console.WriteLine($"\n{batchName} translation failed: {text} - {ex.Message}");
                 cache[text] = text;
                 pendingWrites.Enqueue(new CacheEntry(cacheType, text, text));
                 Interlocked.Increment(ref completed);
@@ -407,14 +407,14 @@ class Program
             }
         });
 
-        Console.WriteLine($"\n{batchName} 翻译完成。");
+        Console.WriteLine($"\n{batchName} translation complete.");
     }
 
     private static async Task<string[]> TranslateLocationWithDeepSeekAsync(string locationKey, int maxRetries = 3)
     {
         var parts = locationKey.Split('|');
         if (parts.Length != 4)
-            throw new ArgumentException($"地点四元组格式错误: {locationKey}");
+            throw new ArgumentException($"Invalid location quad format: {locationKey}");
 
         var systemPrompt = locationPrompt;
         var userPrompt = JsonSerializer.Serialize(parts);
@@ -447,9 +447,9 @@ class Program
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"\nDeepSeek API 请求失败: {(int)response.StatusCode} {response.ReasonPhrase}");
-                    Console.WriteLine($"响应内容: {errorBody}");
-                    throw new Exception($"DeepSeek API 请求失败: {(int)response.StatusCode}");
+                    Console.WriteLine($"\nDeepSeek API error: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    Console.WriteLine($"Response: {errorBody}");
+                    throw new Exception($"DeepSeek API error: {(int)response.StatusCode}");
                 }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
@@ -461,7 +461,7 @@ class Program
                     .GetString();
 
                 if (string.IsNullOrEmpty(messageContent))
-                    throw new Exception("DeepSeek 返回空内容");
+                    throw new Exception("DeepSeek returned empty content");
 
                 using var resultDoc = JsonDocument.Parse(messageContent);
                 var translatedArray = resultDoc.RootElement.GetProperty("translated");
@@ -476,7 +476,7 @@ class Program
             }
             catch (Exception ex)
             {
-                throw new Exception($"地点翻译失败（重试{maxRetries}次后）: {ex.Message}", ex);
+                throw new Exception($"Location translation failed (after {maxRetries} retries): {ex.Message}", ex);
             }
         }
 
@@ -516,9 +516,9 @@ class Program
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"\nDeepSeek API 请求失败: {(int)response.StatusCode} {response.ReasonPhrase}");
-                    Console.WriteLine($"响应内容: {errorBody}");
-                    throw new Exception($"DeepSeek API 请求失败: {(int)response.StatusCode}");
+                    Console.WriteLine($"\nDeepSeek API error: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    Console.WriteLine($"Response: {errorBody}");
+                    throw new Exception($"DeepSeek API error: {(int)response.StatusCode}");
                 }
 
                 var responseJson = await response.Content.ReadAsStringAsync();
@@ -530,7 +530,7 @@ class Program
                     .GetString();
 
                 if (string.IsNullOrEmpty(messageContent))
-                    throw new Exception("DeepSeek 返回空内容");
+                    throw new Exception("DeepSeek returned empty content");
 
                 using var resultDoc = JsonDocument.Parse(messageContent);
                 return resultDoc.RootElement.GetProperty("translated").GetString() ?? ispName;
@@ -541,7 +541,7 @@ class Program
             }
             catch (Exception ex)
             {
-                throw new Exception($"ISP翻译失败（重试{maxRetries}次后）: {ex.Message}", ex);
+                throw new Exception($"ISP translation failed (after {maxRetries} retries): {ex.Message}", ex);
             }
         }
 
@@ -602,7 +602,7 @@ class Program
             }
             catch (Exception ex)
             {
-                throw new Exception($"翻译失败（重试{maxRetries}次后）: {ex.Message}", ex);
+                throw new Exception($"Google translation failed (after {maxRetries} retries): {ex.Message}", ex);
             }
         }
         return text;
@@ -611,10 +611,10 @@ class Program
     private static string ExtractTranslatedText(string jsonResponse)
     {
         var startIdx = jsonResponse.IndexOf("[[[");
-        if (startIdx == -1) throw new Exception("响应格式异常");
+        if (startIdx == -1) throw new Exception("Invalid response format");
 
         var firstQuote = jsonResponse.IndexOf('"', startIdx);
-        if (firstQuote == -1) throw new Exception("未找到译文起始引号");
+        if (firstQuote == -1) throw new Exception("Translation quote not found");
 
         var sb = new StringBuilder();
         var escaped = false;
@@ -654,9 +654,9 @@ class Program
 
     private static void LoadAllCaches()
     {
-        LoadCacheFile(locationCachePath, locationCache, "地点四元组");
-        LoadCacheFile(ispCachePath, ispCache, "ISP名称");
-        LoadCacheFile(generalCachePath, generalCache, "其他字段");
+        LoadCacheFile(locationCachePath, locationCache, "Location quads");
+        LoadCacheFile(ispCachePath, ispCache, "ISP names");
+        LoadCacheFile(generalCachePath, generalCache, "Other fields");
     }
 
     private static void LoadCacheFile(string path, ConcurrentDictionary<string, string> dict, string name)
@@ -670,7 +670,7 @@ class Program
             dict[parts[0]] = parts[1];
             count++;
         }
-        Console.WriteLine($"已加载 {name} 缓存 {count} 条。");
+        Console.WriteLine($"Loaded {name} cache: {count} entries.");
     }
 
     enum CacheType { General, Location, Isp }

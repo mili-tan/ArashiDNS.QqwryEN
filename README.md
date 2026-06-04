@@ -1,57 +1,56 @@
 # QQWRY-EN
 
-将纯真 IP 数据库（QQWRY）从中文翻译为英文的工具。
+A tool to translate the Chunzhen IP Database (CZ88 QQWRY) from Chinese to English.
 
-## 功能特点
+## Features
 
-- 使用 DeepSeek V4 Flash API 翻译地点（国家、省、市、区）四元组
-- 使用 DeepSeek V4 Flash API 翻译 ISP 名称
-- 使用 Google 翻译翻译其他字段
-- 支持并发翻译，可配置并发数
-- 支持缓存，避免重复翻译
-- 所有配置均可通过 `appsettings.json` 调整
-- GitHub Actions 自动更新（每月1日、15日）
+- Translates location quads (Country, Region, City, District) using DeepSeek V4 Flash API
+- Translates ISP names using DeepSeek V4 Flash API
+- Translates other fields using Google Translate
+- Configurable concurrent translation with caching
+- All settings configurable via `appsettings.json`
+- Auto-updates via GitHub Actions (1st and 15th of each month)
 
-## 下载
+## Download
 
-从 [Releases](https://github.com/YOUR_USERNAME/QQWRY-EN/releases) 页面下载最新的 `qqwry_en.ipdb` 或 `output_en.txt` 文件。
+Download the latest `qqwry_en.ipdb` or `output_en.txt` from the [Releases](https://github.com/YOUR_USERNAME/QQWRY-EN/releases) page.
 
-## 自动构建
+## Automated Build
 
-本项目使用 GitHub Actions 自动构建，每月1日和15日自动更新：
+This project uses GitHub Actions for automated builds, updating on the 1st and 15th of each month:
 
-1. 从 [sjzar/ips](https://github.com/sjzar/ips) 获取最新 ips 工具
-2. 从 [nmgliangwei/qqwry.ipdb](https://github.com/nmgliangwei/qqwry.ipdb/releases/) 获取最新 qqwry.ipdb
-3. 解包、翻译、重新打包
-4. 发布到 Releases（保留最近3个版本）
+1. Fetches the latest ips tool from [sjzar/ips](https://github.com/sjzar/ips)
+2. Fetches the latest qqwry 
+3. Unpacks, translates, and repacks
+4. Publishes to Releases (keeps latest 3 versions)
 
-### 配置 Secrets
+### Configure Secrets
 
-在仓库 Settings > Secrets and variables > Actions 中添加：
+Add the following in Settings > Secrets and variables > Actions:
 
-| Secret | 说明 |
-|--------|------|
+| Secret | Description |
+|--------|-------------|
 | DEEPSEEK_API_KEY | DeepSeek API Key |
 
-## 手动构建
+## Manual Build
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
-确保已安装 [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)。
+Ensure [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) is installed.
 
-### 2. 使用 ips 工具导出 QQWRY 数据
+### 2. Export QQWRY Data with ips
 
-使用 [sjzar/ips](https://github.com/sjzar/ips) 工具将 QQWRY 数据库导出为 TXT 格式：
+Use [sjzar/ips](https://github.com/sjzar/ips) to export the QQWRY database to TXT format:
 
 ```bash
-# 安装 ips 工具
+# Install ips
 go install github.com/sjzar/ips@latest
 
-# 导出 QQWRY 数据为 TXT 格式
+# Export QQWRY data to TXT
 ips dump -i qqwry.ipdb -o qqwry.txt
 ```
 
-导出的 `qqwry.txt` 格式如下：
+Exported `qqwry.txt` format:
 
 ```
 # ip_cidr	country_name,region_name,city_name,district_name,owner_domain,isp_domain,country_code,continent_code
@@ -59,9 +58,9 @@ ips dump -i qqwry.ipdb -o qqwry.txt
 1.0.0.0/24	澳大利亚,,,,,,,AU
 ```
 
-### 3. 配置 DeepSeek API
+### 3. Configure DeepSeek API
 
-编辑 `appsettings.json`，填入你的 DeepSeek API Key：
+Edit `appsettings.json` with your DeepSeek API Key:
 
 ```json
 {
@@ -73,7 +72,7 @@ ips dump -i qqwry.ipdb -o qqwry.txt
 }
 ```
 
-或者设置环境变量 `DEEPSEEK_API_KEY`：
+Or set the environment variable `DEEPSEEK_API_KEY`:
 
 ```bash
 # Windows PowerShell
@@ -83,27 +82,27 @@ $env:DEEPSEEK_API_KEY="your-api-key-here"
 export DEEPSEEK_API_KEY="your-api-key-here"
 ```
 
-> 当配置文件中的 API Key 为空或为默认值 `your-api-key-here` 时，程序会自动从环境变量 `DEEPSEEK_API_KEY` 读取。
+> When the API Key in the config file is empty or set to the default `your-api-key-here`, the program will automatically read from the `DEEPSEEK_API_KEY` environment variable.
 
-### 4. 运行翻译
+### 4. Run Translation
 
 ```bash
 dotnet run
 ```
 
-翻译完成后，输出文件为 `output_en.txt`。
+Output file: `output_en.txt`
 
-### 5. 重新打包为 QQWRY 格式
+### 5. Repack to QQWRY Format
 
-使用 ips 工具将翻译后的数据重新打包（请复制原文件头部的注释内容到新文件中）：
+Use ips to repack the translated data:
 
 ```bash
 ips pack -i output_en.txt -o qqwry_en.ipdb
 ```
 
-## 配置说明
+## Configuration
 
-所有配置项在 `appsettings.json` 中：
+All settings are in `appsettings.json`:
 
 ```json
 {
@@ -130,66 +129,66 @@ ips pack -i output_en.txt -o qqwry_en.ipdb
 }
 ```
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
+| Setting | Description | Default |
+|---------|-------------|---------|
 | DeepSeek.ApiKey | DeepSeek API Key | - |
-| DeepSeek.BaseUrl | DeepSeek API 地址 | https://api.deepseek.com |
-| DeepSeek.Model | 使用的模型 | deepseek-v4-flash |
-| Concurrency.DeepSeekConcurrency | DeepSeek 并发数 | 64 |
-| Concurrency.GoogleConcurrency | Google 翻译并发数 | 10 |
-| Files.InputFile | 输入文件 | qqwry.txt |
-| Files.OutputFile | 输出文件 | output_en.txt |
-| Files.LocationCacheFile | 地点缓存文件 | location_cache.tsv |
-| Files.IspCacheFile | ISP 缓存文件 | isp_cache.tsv |
-| Files.GeneralCacheFile | 通用缓存文件 | translation_cache.tsv |
-| Prompts.LocationPrompt | 地点翻译提示词 | - |
-| Prompts.IspPrompt | ISP 翻译提示词 | - |
+| DeepSeek.BaseUrl | DeepSeek API endpoint | https://api.deepseek.com |
+| DeepSeek.Model | Model name | deepseek-v4-flash |
+| Concurrency.DeepSeekConcurrency | DeepSeek concurrency | 64 |
+| Concurrency.GoogleConcurrency | Google Translate concurrency | 10 |
+| Files.InputFile | Input file | qqwry.txt |
+| Files.OutputFile | Output file | output_en.txt |
+| Files.LocationCacheFile | Location cache file | location_cache.tsv |
+| Files.IspCacheFile | ISP cache file | isp_cache.tsv |
+| Files.GeneralCacheFile | General cache file | translation_cache.tsv |
+| Prompts.LocationPrompt | Location translation prompt | (built-in) |
+| Prompts.IspPrompt | ISP translation prompt | (built-in) |
 
-## 缓存机制
+## Caching
 
-程序使用三个缓存文件避免重复翻译：
+Three cache files are used to avoid redundant translations:
 
-- `location_cache.tsv`：地点四元组（国家|省|市|区）缓存
-- `isp_cache.tsv`：ISP 名称缓存
-- `translation_cache.tsv`：其他字段（所有者域名）缓存
+- `location_cache.tsv`: Location quads (Country|Region|City|District)
+- `isp_cache.tsv`: ISP names
+- `translation_cache.tsv`: Other fields (owner domains)
 
-缓存格式为 TSV（Tab 分隔），每行格式：`原文\t译文`
+Cache format is TSV (tab-separated), one entry per line: `source\ttranslation`
 
-## 翻译规则
+## Translation Rules
 
-### 地点翻译
+### Location Translation
 
-- 使用 DeepSeek API 翻译
-- 四元组（国家、省、市、区）合并缓存
-- 不输出 Province、City、County、District 等后缀
+- Uses DeepSeek API
+- Location quads (Country, Region, City, District) are cached as a combined key
+- No suffixes like Province, City, County, District are appended
 
-### ISP 翻译
+### ISP Translation
 
-- 使用 DeepSeek API 翻译
-- 优先按中国语境翻译
-- 含有额外信息的 ISP 使用 `_` 分隔符
-- 格式：`ISP_类型_所有者` 或 `ISP_额外信息`
+- Uses DeepSeek API
+- Prioritizes Chinese context by default
+- ISP names with additional info use `_` as separator
+- Format: `ISP_Type_Owner` or `ISP_ExtraInfo`
 
-### 其他字段
+### Other Fields
 
-- 使用 Google 翻译
-- 包括所有者域等字段
+- Uses Google Translate
+- Includes owner domain fields
 
-## 项目结构
+## Project Structure
 
 ```
 QQWRY-EN/
-├── Program.cs              # 主程序
-├── QQWRY-EN.csproj         # 项目文件
-├── appsettings.json        # 配置文件
-├── qqwry.txt               # 输入文件（需自行导出）
-├── output_en.txt           # 输出文件
-├── location_cache.tsv      # 地点缓存
-├── isp_cache.tsv           # ISP 缓存
-└── translation_cache.tsv   # 通用缓存
+├── Program.cs              # Main program
+├── QQWRY-EN.csproj         # Project file
+├── appsettings.json        # Configuration
+├── qqwry.txt               # Input file (user-provided)
+├── output_en.txt           # Output file
+├── location_cache.tsv      # Location cache
+├── isp_cache.tsv           # ISP cache
+└── translation_cache.tsv   # General cache
 ```
 
-## 致谢
+## Credits
 
-- [sjzar/ips](https://github.com/sjzar/ips) - IP 数据库工具
-- [纯真网络](http://www.cz88.net/) - QQWRY 数据库
+- [sjzar/ips](https://github.com/sjzar/ips) - IP database tool
+- [Chunzhen Network](http://www.cz88.net/) - QQWRY database
