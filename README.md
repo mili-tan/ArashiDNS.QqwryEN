@@ -13,7 +13,7 @@ A tool to translate the Chunzhen IP Database (CZ88 QQWRY) from Chinese to Englis
 
 ## Download
 
-Download the latest `qqwry_en.ipdb` or `output_en.txt` from the [Releases](https://github.com/YOUR_USERNAME/QQWRY-EN/releases) page.
+Download the latest `qqwry_en.ipdb` or `output_en.txt` from the [Releases](https://github.com/mili-tan/ArashiDNS.QqwryEN/releases) page.
 
 ## Automated Build
 
