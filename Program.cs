@@ -15,7 +15,7 @@ class Program
 
     private static string deepSeekApiKey = "";
     private static string deepSeekBaseUrl = "https://api.deepseek.com";
-    private static string deepSeekModel = "deepseek-v4-flash";
+    private static string deepSeekModel = "deepseek-flash";
 
     private static string locationPrompt = @"你是一个专业的地理名称翻译助手。请将以下json数组中的中文地理名称翻译为英文json。
 输入格式：[""国家"", ""省"", ""市"", ""区""]
@@ -195,7 +195,7 @@ class Program
 
         deepSeekApiKey = configuration["DeepSeek:ApiKey"] ?? "";
         deepSeekBaseUrl = configuration["DeepSeek:BaseUrl"] ?? "https://api.deepseek.com";
-        deepSeekModel = configuration["DeepSeek:Model"] ?? "deepseek-v4-flash";
+        deepSeekModel = configuration["DeepSeek:Model"] ?? "deepseek-flash";
 
         if (string.IsNullOrEmpty(deepSeekApiKey) || deepSeekApiKey == "your-api-key-here")
             deepSeekApiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY") ?? "";
